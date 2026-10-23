@@ -45,6 +45,9 @@
           />
         </div>
 
+        <!-- 搜索框与会话列表之间的短分隔线 -->
+        <div class="session-search-divider" aria-hidden="true"></div>
+
         <div v-if="sessionError" role="status" class="session-load-error">
           <p>{{ sessionError }}</p>
           <el-button size="small" :loading="sessionLoading" @click="getSessions">重试读取</el-button>
@@ -197,8 +200,7 @@
           </div>
         </div>
 
-        <!-- 输入区域 -->
-        <div class="chat-input-area">
+        <!-- 输入区域 -->        <div class="chat-input-area">
           <div class="input-wrapper">
             <el-input
               v-model="inputMessage"
@@ -397,8 +399,7 @@ const SidebarCollapseIcon = (props) => h('svg', {
   'stroke-linecap': 'round',
   'stroke-linejoin': 'round'
 }, [
-  h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 4 }),
-  h('line', { x1: 9, y1: 3, x2: 9, y2: 21 })
+  h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 4 }),  h('line', { x1: 9, y1: 3, x2: 9, y2: 21 })
 ]);
 
 // 自定义展开图标（左宽右窄，用于收起后的展开操作）
@@ -597,8 +598,7 @@ function hideProductMessage(message) {
   Object.assign(message, { content: '', reasoningContent: '', reasoningStatus: 'completed', references: [], parameterResult: null, currentParameterStatuses: {}, productStatus: 'failed', productErrors: ['此轮资料当前不可访问，请确认权限。'] });
 }
 async function stopProductMessage(message) {
-  if (loading.value || !message.generationId || message.sessionId !== currentSessionId.value) return;
-  const epoch = chatGeneration;
+  if (loading.value || !message.generationId || message.sessionId !== currentSessionId.value) return;  const epoch = chatGeneration;
   loading.value = true;
   try {
     await cancelChatRun(message.runId || message.generationId, message.sessionId, message.generationId);
@@ -797,8 +797,7 @@ function formatTime(timeStr) {
 }
 
 async function getModels() {
-  const owner = accountGeneration, request = ++modelRequest, selected = currentModelId.value;
-  const current = () => owner === accountGeneration && request === modelRequest;
+  const owner = accountGeneration, request = ++modelRequest, selected = currentModelId.value;  const current = () => owner === accountGeneration && request === modelRequest;
   modelLoading.value = true; modelsLoaded.value = false; modelError.value = '';
   modelOptions.value = []; currentModelId.value = undefined;
   try {
@@ -997,8 +996,7 @@ async function sendRequest(text, images, retrySupplementFrom = null, conditions 
   const epoch = ++chatGeneration, isProduct = chatMode.value === 'product';
   if (isProduct && !currentModelId.value) {
     proxy.$modal.msgError("请先选择模型");
-    return;
-  }
+    return;  }
 
   loading.value = true;
   const imageList = images ? images.slice() : [];
@@ -1197,8 +1195,7 @@ async function handleImageInputChange(event) {
     if (file.size > maxSize) {
       proxy.$modal.msgError(`单张图片大小不能超过 ${maxImageMb} MB`);
       return;
-    }
-  }
+    }  }
   try {
     proxy.$modal.loading("正在上传图片，请稍候...");
     for (const file of files) {
@@ -1397,7 +1394,6 @@ onMounted(() => {
 
 .session-load-error { padding: 12px; overflow-wrap: anywhere; }
 .product-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px; }
-
 .chat-container {
   height: calc(100vh - 84px);
   padding: 0;
@@ -1507,6 +1503,16 @@ onMounted(() => {
     :deep(.el-input__inner) { font-size: 14px; }
   }
 
+  .session-search-divider {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 2px;
+    margin: 0 auto 10px;
+    border-radius: 2px;
+    background: var(--el-border-color);
+    opacity: 0.8;
+  }
+
   .session-list {
     flex: 1;
     min-width: 0;
@@ -1598,293 +1604,3 @@ onMounted(() => {
     align-items: center;
     padding: 0 20px;
     .header-title { font-size: 16px; font-weight: 600; color: var(--el-text-color-primary); margin-left: 8px; }
-
-    .expand-btn {
-      color: var(--el-text-color-regular);
-      &:hover { color: var(--el-color-primary); }
-    }
-
-    .header-right-actions {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      .product-header-actions { display: flex; align-items: center; }
-    }
-  }
-
-  .chat-history {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    .chat-content {
-      min-height: 100%;
-      padding-bottom: 20px;
-      &.is-empty { display: flex; flex-direction: column; height: 100%; }
-    }
-
-    .welcome-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: var(--el-text-color-secondary);
-      opacity: 0.8;
-      .welcome-icon { background: var(--el-fill-color); border-radius: 50%; padding: 20px; margin-bottom: 20px; color: var(--el-color-primary); }
-      h2 { margin-bottom: 10px; font-weight: 500; }
-    }
-
-    .message-row {
-      display: flex;
-      max-width: 900px;
-      margin-bottom: 24px;
-      margin-left: auto;
-      margin-right: auto;
-
-      .message-avatar {
-        flex-shrink: 0;
-        margin-right: 12px;
-        margin-top: 2px;
-        .avatar-user { background-color: var(--el-color-primary); }
-        .avatar-ai { background-color: var(--el-color-success); }
-      }
-
-      .message-content-wrapper {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        max-width: calc(100% - 52px);
-
-        .message-sender {
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
-          margin-bottom: 4px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .message-time { font-size: 11px; opacity: 0.8; }
-        .message-bubble {
-          padding: 12px 16px;
-          border-radius: 12px;
-          font-size: 15px;
-          line-height: 1.6;
-          max-width: 100%;
-          min-width: 60px;
-        }
-        .ragflow-evidence { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-        .ragflow-evidence-item { width: 180px; margin: 0; border: 1px solid var(--el-border-color-light); border-radius: 8px; overflow: hidden; background: var(--el-fill-color-lighter); }
-        .ragflow-evidence-image { display: block; width: 180px; height: 120px; cursor: zoom-in; }
-        .ragflow-evidence-item figcaption { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 12px; color: var(--el-text-color-secondary); }
-        .ragflow-evidence-excerpt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        .message-footer {
-          margin-top: 6px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
-          .message-metrics { font-size: 12px; color: var(--el-text-color-secondary); display: flex; flex-wrap: wrap; gap: 8px; }
-          .footer-actions { display: flex; align-items: center; gap: 10px; }
-          .model-info { margin-left: auto; }
-        }
-      }
-
-      &.message-user {
-        flex-direction: row-reverse;
-        padding-left: 52px;
-        .message-avatar { margin-left: 12px; margin-right: 0; }
-        .message-content-wrapper {
-          align-items: flex-end;
-          .message-sender { flex-direction: row-reverse; }
-          .message-bubble {
-            background-color: var(--el-color-primary);
-            color: #fff;
-            border-top-right-radius: 2px;
-            .user-text { white-space: pre-wrap; word-break: break-word; }
-            .user-images {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 8px;
-              margin-bottom: 8px;
-              justify-content: flex-end;
-              .user-image-item { width: 100px; height: 100px; border-radius: 4px; cursor: pointer; background-color: var(--app-surface-overlay, rgba(255, 255, 255, 0.1)); }
-            }
-          }
-          .message-footer {
-            justify-content: flex-end;
-            .footer-actions { flex-direction: row-reverse; }
-          }
-        }
-      }
-
-      &.message-ai {
-        padding-right: 52px;
-        .message-content-wrapper {
-          align-items: stretch;
-          .message-bubble { background-color: var(--el-bg-color); border: 1px solid var(--el-border-color); border-top-left-radius: 2px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02); }
-        }
-      }
-    }
-  }
-
-  /* 输入区域外观 */
-  .chat-input-area {
-    background-color: var(--el-bg-color-page);
-    padding: 10px 20px 20px;
-
-    .input-wrapper {
-      max-width: 900px;
-      margin: 0 auto;
-      border: 1px solid var(--el-border-color);
-      border-radius: 16px;
-      padding: 12px 16px;
-      background-color: var(--el-bg-color);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-      transition: all 0.3s;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-
-      &:focus-within {
-        border-color: var(--el-color-primary);
-        box-shadow: 0 4px 20px var(--el-color-primary-light-9);
-      }
-
-      :deep(.el-textarea__inner) {
-        border: none;
-        box-shadow: none !important;
-        padding: 0;
-        resize: none;
-        max-height: 200px;
-        background-color: transparent;
-        color: var(--el-text-color-primary);
-        font-size: 15px;
-        line-height: 1.5;
-      }
-
-      .selected-knowledge-bases {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 4px;
-
-        .kb-pill {
-          display: inline-flex;
-          align-items: center;
-          background-color: var(--el-fill-color-light);
-          color: var(--el-text-color-regular);
-          border-radius: 8px;
-          padding: 4px 10px;
-          font-size: 13px;
-          line-height: 1;
-          border: 1px solid var(--el-border-color-lighter);
-          transition: background 0.2s;
-
-          .kb-name { margin-right: 6px; }
-          .kb-close {
-            cursor: pointer;
-            font-size: 14px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-            &:hover { opacity: 1; color: var(--el-color-danger); }
-          }
-        }
-      }
-
-      .selected-images {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 4px;
-        .selected-image-item { width: 60px; height: 60px; border-radius: 6px; cursor: pointer; border: 1px solid var(--el-border-color); background-color: var(--el-fill-color-light); }
-      }
-
-      .input-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 4px;
-
-        .left-actions {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-
-          .add-kb-btn {
-            border-radius: 6px;
-            color: var(--el-text-color-regular);
-            border-color: var(--el-border-color);
-            &:hover { color: var(--el-color-primary); border-color: var(--el-color-primary); }
-          }
-
-          .toggle-chip { border-radius: 999px; margin-left: 0; }
-        }
-
-        .send-btn {
-          padding: 10px;
-          font-size: 18px;
-          transition: transform 0.2s;
-          &:hover:not(:disabled) { transform: scale(1.05); }
-        }
-      }
-    }
-  }
-}
-
-/* 弹窗重新设计 */
-.search-dialog {
-  .search-hint {
-    margin-top: 12px;
-    font-size: 13px;
-    color: var(--el-text-color-secondary);
-  }
-}
-
-.kb-dialog {
-  :deep(.el-dialog__header) { margin-bottom: 16px; }
-  :deep(.el-dialog__body) { padding-top: 0; }
-
-  .kb-dialog-content {
-    min-height: 200px;
-  }
-  .kb-checkbox-list {
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 8px;
-
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: var(--el-border-color); border-radius: 2px; }
-
-    .kb-checkbox-item {
-      display: flex;
-      width: 100%;
-      margin-right: 0;
-      margin-bottom: 8px;
-      padding: 12px;
-      border: 1px solid var(--el-border-color-lighter);
-      border-radius: 8px;
-      transition: all 0.2s;
-
-      &:hover { background-color: var(--el-fill-color-light); }
-      &:last-child { margin-bottom: 0; }
-
-      :deep(.el-checkbox__label) {
-        display: flex;
-        flex-direction: column;
-        white-space: normal;
-        line-height: 1.4;
-      }
-
-      .kb-item-name { font-size: 14px; color: var(--el-text-color-primary); font-weight: 500; }
-      .kb-item-desc { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 4px; }
-    }
-  }
-}
-
-.chat-config-dialog {
-  :deep(.el-dialog__body) { padding-top: 10px; padding-bottom: 10px; }
-  :deep(.el-form-item) { margin-bottom: 16px; }
-  :deep(.el-form-item__label) { font-size: 13px; color: var(--el-text-color-secondary); }
-}
-</style>
