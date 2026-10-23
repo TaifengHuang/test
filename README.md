@@ -8,7 +8,7 @@
     <!-- 会话界面 -->
     <el-container v-else style="height: 100%">
       <!-- 侧边栏：会话历史 -->
-      <el-aside v-show="!sidebarCollapsed && !activeSourceMessage" width="260px" class="session-sidebar">
+      <el-aside v-show="!sidebarCollapsed && !activeSourceMessage" width="280px" class="session-sidebar">
         <!-- 侧边栏顶部操作区 -->
         <div class="sidebar-top-actions">
           <!-- 聊天模式下拉选择 -->
@@ -1416,38 +1416,55 @@ onMounted(() => {
   }
 
   .sidebar-header {
-    padding: 10px 12px 8px;
+    padding: 12px 14px 10px;
+
     .new-chat-btn {
       width: 100%;
-      border-radius: 24px;
-      height: 44px;
+      height: 46px;
+      border-radius: 14px;
       font-size: 15px;
-      font-weight: 500;
-      background-color: var(--el-fill-color-light);
-      border: 1px solid transparent;
-      color: var(--el-text-color-primary);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      transition: all 0.2s;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: var(--el-color-primary);
+      background: linear-gradient(135deg, var(--el-color-primary-light-9), var(--el-fill-color-light));
+      border: 1px solid var(--el-border-color-lighter);
+      box-shadow: 0 3px 10px rgba(64, 158, 255, 0.08);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
       display: flex;
       justify-content: center;
       align-items: center;
 
       &:hover {
-        border-color: var(--el-color-primary-light-3);
-        color: var(--el-color-primary);
-        background-color: var(--el-color-primary-light-9);
+        border-color: var(--el-color-primary-light-5);
+        background: var(--el-color-primary-light-9);
+        box-shadow: 0 5px 14px rgba(64, 158, 255, 0.14);
+        transform: translateY(-1px);
       }
-      .btn-icon { margin-right: 6px; font-size: 16px; }
+      &:active { transform: translateY(0); }
+      .btn-icon { margin-right: 7px; font-size: 17px; }
     }
   }
 
   .sidebar-search {
-    padding: 0 12px 10px;
+    margin: 0 14px 12px;
+    padding: 9px;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 14px;
+    background: var(--el-fill-color-lighter);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
 
     :deep(.el-input__wrapper) {
-      border-radius: 10px;
-      box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
+      min-height: 38px;
+      padding: 0 11px;
+      border-radius: 9px;
+      background: var(--el-bg-color);
+      box-shadow: 0 0 0 1px var(--el-border-color-light) inset;
+      transition: box-shadow 0.2s ease;
     }
+    :deep(.el-input__wrapper.is-focus) {
+      box-shadow: 0 0 0 1px var(--el-color-primary) inset;
+    }
+    :deep(.el-input__inner) { font-size: 14px; }
   }
 
   .session-list {
@@ -1467,10 +1484,11 @@ onMounted(() => {
     .session-item {
       display: flex;
       align-items: center;
-      padding: 10px 12px;
-      margin-bottom: 4px;
+      padding: 11px 12px;
+      margin-bottom: 5px;
       background-color: transparent;
-      border-radius: 8px;
+      border-radius: 10px;
+      min-height: 44px;
       cursor: pointer;
       transition: all 0.2s;
       position: relative;
@@ -1489,11 +1507,15 @@ onMounted(() => {
         display: flex; align-items: center; flex: 1; min-width: 0; border: 0; padding: 0; background: transparent; text-align: left; font: inherit; cursor: pointer;
         &:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 2px; }
         .session-title {
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+          overflow-wrap: anywhere;
+          line-height: 1.5;
+          max-height: 3em;
           font-size: 14px;
           color: var(--el-text-color-primary);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
         }
       }
 
