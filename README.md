@@ -8,7 +8,7 @@
     <!-- 会话界面 -->
     <el-container v-else style="height: 100%">
       <!-- 侧边栏：会话历史 -->
-      <el-aside v-show="!sidebarCollapsed && !activeSourceMessage" width="280px" class="session-sidebar">
+      <el-aside v-show="!sidebarCollapsed && !activeSourceMessage" width="340px" class="session-sidebar">
         <!-- 侧边栏顶部操作区 -->
         <div class="sidebar-top-actions">
           <!-- 聊天模式下拉选择 -->
@@ -1376,6 +1376,10 @@ onMounted(() => {
 
 /* ===== 侧边栏美化 ===== */
 .session-sidebar {
+  width: 340px !important;
+  min-width: 340px;
+  flex: 0 0 340px;
+  box-sizing: border-box;
   border-right: 1px solid var(--el-border-color-lighter);
   background-color: var(--el-bg-color); /* 适配夜间模式 */
   display: flex;
@@ -1446,8 +1450,11 @@ onMounted(() => {
   }
 
   .sidebar-search {
+    width: auto;
+    min-width: 0;
     margin: 0 14px 12px;
     padding: 9px;
+    box-sizing: border-box;
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 14px;
     background: var(--el-fill-color-lighter);
@@ -1469,8 +1476,11 @@ onMounted(() => {
 
   .session-list {
     flex: 1;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
     overflow-y: auto;
-    padding: 4px 8px; /* 左边距缩小，让组件更宽 */
+    padding: 4px 10px;
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb { background: var(--el-border-color); border-radius: 2px; }
 
