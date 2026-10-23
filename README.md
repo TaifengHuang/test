@@ -18,12 +18,6 @@
           </el-select>
 
           <div class="top-icons">
-            <!-- 搜索图标 -->
-            <el-tooltip content="搜索会话" placement="bottom">
-              <el-button link class="icon-btn" @click="openSearchDialog">
-                <el-icon size="18"><Search /></el-icon>
-              </el-button>
-            </el-tooltip>
             <!-- 收起侧边栏图标 -->
             <el-tooltip content="收起会话栏" placement="bottom">
               <el-button link class="icon-btn" @click="toggleSessionSidebar">
@@ -38,6 +32,17 @@
           <el-button class="new-chat-btn" @click="newConversation">
             <el-icon class="btn-icon"><Plus /></el-icon> 新建对话
           </el-button>
+        </div>
+
+        <!-- 会话搜索框：直接显示在新建对话下方 -->
+        <div class="sidebar-search">
+          <el-input
+            v-model="sessionSearch"
+            placeholder="搜索历史对话..."
+            clearable
+            :prefix-icon="Search"
+            aria-label="搜索历史对话"
+          />
         </div>
 
         <div v-if="sessionError" role="status" class="session-load-error">
@@ -1411,7 +1416,7 @@ onMounted(() => {
   }
 
   .sidebar-header {
-    padding: 10px 12px 12px;
+    padding: 10px 12px 8px;
     .new-chat-btn {
       width: 100%;
       border-radius: 24px;
@@ -1433,6 +1438,15 @@ onMounted(() => {
         background-color: var(--el-color-primary-light-9);
       }
       .btn-icon { margin-right: 6px; font-size: 16px; }
+    }
+  }
+
+  .sidebar-search {
+    padding: 0 12px 10px;
+
+    :deep(.el-input__wrapper) {
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset;
     }
   }
 
