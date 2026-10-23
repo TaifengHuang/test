@@ -17,11 +17,11 @@
             <el-option value="product" label="参数问答" />
           </el-select>
 
-          <div class="top-icons">
+          <div class="top-icons"">
             <!-- 收起侧边栏图标 -->
             <el-tooltip content="收起会话栏" placement="bottom">
               <el-button link class="icon-btn" @click="toggleSessionSidebar">
-                <el-icon size="18"><Fold /></el-icon>
+                <SidebarCollapseIcon size="18" />
               </el-button>
             </el-tooltip>
           </div>
@@ -52,7 +52,7 @@
 
         <!-- 会话列表 -->
         <div class="session-list" v-loading="sessionLoading">
-          <div v-if="filteredSessions.length > 0" class="session-group-label">今天</div>
+<!--          <div v-if="filteredSessions.length > 0" class="session-group-label">今天</div>-->
 
           <div v-for="session in filteredSessions" :key="session.sessionId" :class="['session-item', currentSessionId === session.sessionId ? 'active' : '']">
             <button type="button" class="session-open" :aria-label="`打开会话：${session.sessionTitle || '新对话'}`" :aria-pressed="currentSessionId === session.sessionId" @click="loadSession(session.sessionId)">
@@ -75,7 +75,7 @@
           <div class="header-left">
             <!-- 当侧边栏收起时，提供一个展开按钮 -->
             <el-button v-if="sidebarCollapsed" link class="expand-btn" @click="toggleSessionSidebar">
-              <el-icon size="18"><Expand /></el-icon>
+              <SidebarCollapseIcon size="18" />
             </el-button>
             <span class="header-title">{{ currentSessionTitle }}</span>
           </div>
@@ -349,6 +349,7 @@ import { Picture, DocumentCopy, Delete } from "@element-plus/icons-vue";
 import { v4 as uuidv4 } from "uuid";
 import { useResizeObserver } from "@vueuse/core";
 import { getUseMonaco } from 'markstream-vue'
+import { h } from 'vue';
 
 getUseMonaco()
 
@@ -384,6 +385,36 @@ const tempSelectedKnowledgeBaseIds = ref([]);
 const selectedKnowledgeBases = computed(() => {
   return ragflowKnowledgeBases.value.filter(kb => ragflowLibraryIds.value.includes(kb.libraryId));
 });
+
+// 自定义收起图标（左窄右宽）
+const SidebarCollapseIcon = (props) => h('svg', {
+  viewBox: '0 0 24 24',
+  width: props.size || 18,
+  height: props.size || 18,
+  fill: 'none',
+  stroke: 'currentColor',
+  'stroke-width': 2,
+  'stroke-linecap': 'round',
+  'stroke-linejoin': 'round'
+}, [
+  h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 4 }),
+  h('line', { x1: 9, y1: 3, x2: 9, y2: 21 })
+]);
+
+// 自定义展开图标（左宽右窄，用于收起后的展开操作）
+const SidebarExpandIcon = (props) => h('svg', {
+  viewBox: '0 0 24 24',
+  width: props.size || 18,
+  height: props.size || 18,
+  fill: 'none',
+  stroke: 'currentColor',
+  'stroke-width': 2,
+  'stroke-linecap': 'round',
+  'stroke-linejoin': 'round'
+}, [
+  h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 4 }),
+  h('line', { x1: 15, y1: 3, x2: 15, y2: 21 })
+]);
 
 function openKnowledgeBaseDialog() {
   if (ragflowKnowledgeBasesLoading.value) return;
@@ -1376,9 +1407,11 @@ onMounted(() => {
 
 /* ===== 侧边栏美化 ===== */
 .session-sidebar {
-  width: 340px !important;
-  min-width: 340px;
-  flex: 0 0 340px;
+  padding: 0;
+  margin: 0;
+  width: 300px !important;
+  min-width: 300px;
+  flex: 0 0 300px;
   box-sizing: border-box;
   border-right: 1px solid var(--el-border-color-lighter);
   background-color: var(--el-bg-color); /* 适配夜间模式 */
