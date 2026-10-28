@@ -1,7 +1,7 @@
 <template>
   <div class="app-container chat-container" :class="{ 'has-evidence-panel': activeSourceMessage }">
     <!-- 每次进入都显示的欢迎页 -->
-    <div v-if="showWelcome" class="welcome-page" v-loading="startingChat || checkingRagflowChat"
+    <div v-if="showWelcome" class="welcome-page"
          :class="{ 'is-starting': startingChat || checkingRagflowChat }">
       <el-button v-if="!checkingRagflowChat" type="primary" size="large" class="start-chat-btn" @click="startChat">
         开始聊天
