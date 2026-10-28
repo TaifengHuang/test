@@ -349,9 +349,9 @@
                   深度思考
                 </el-button>
               </div>
-              <el-button class="send-btn" :type="loading ? 'danger' : 'primary'"
-                         :icon="loading ? 'VideoPause' : 'Promotion'" circle size="large" @click="handleMainAction"
-                         :disabled="!loading && !inputMessage.trim() && !inputImages.length"/>
+              <el-button class="send-btn" :type="abortController ? 'danger' : 'primary'"
+                         :icon="abortController ? 'VideoPause' : 'Promotion'" circle size="large" @click="handleMainAction"
+                         :disabled="!abortController && (loading || (!inputMessage.trim() && !inputImages.length))"/>
             </div>
           </div>
         </div>
@@ -1888,9 +1888,11 @@ function scrollToBottom() {
 }
 
 function handleMainAction() {
-  if (loading.value) {
+  // 只有真正存在流式请求控制器时才显示/执行“停止生成”；
+  // loading 也用于会话详情加载，不能仅凭 loading 判断生成状态。
+  if (abortController.value) {
     stopGeneration();
-  } else {
+  } else if (!loading.value) {
     handleSend();
   }
 }
