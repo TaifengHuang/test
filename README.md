@@ -93,6 +93,9 @@
             <span class="header-title">{{ currentSessionTitle }}</span>
           </div>
           <div class="header-right-actions">
+            <el-button class="logout-btn" plain @click="handleLogout">
+              退出登录
+            </el-button>
             <div v-if="chatMode === 'product'" class="product-header-actions">
               <el-tooltip content="全局参数配置" placement="bottom">
                 <el-button icon="Setting" aria-label="全局参数配置" circle style="margin-right: 10px"
@@ -565,6 +568,24 @@ getUseMonaco()
 
 const {proxy} = getCurrentInstance();
 const router = useRouter();
+
+// 退出当前账号并返回登录页，避免仅清理状态但仍停留在聊天界面。
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出当前账号吗？', '退出登录', {
+      confirmButtonText: '退出登录',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    await account.logOut();
+    await router.replace('/login');
+  } catch (error) {
+    // 用户取消确认时不提示错误；退出失败时保留当前页面并提示。
+    if (error !== 'cancel' && error !== 'close') {
+      proxy.$modal?.msgError?.(error?.message || '退出登录失败，请重试');
+    }
+  }
+}
 
 // ===== 欢迎页状态 =====
 const showWelcome = ref(true);
@@ -3152,6 +3173,11 @@ onMounted(() => {
     font-size: 13px;
     color: var(--el-text-color-secondary);
   }
+}
+
+.logout-btn {
+  margin-left: 12px;
+  border-radius: 8px;
 }
 
 .session-search-divider {
