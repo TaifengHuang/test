@@ -557,14 +557,10 @@ import {v4 as uuidv4} from "uuid";
 import {useResizeObserver} from "@vueuse/core";
 import {getUseMonaco} from 'markstream-vue'
 import {h} from 'vue';
-import { useRouter } from 'vue-router';
-// 在 const {proxy} = getCurrentInstance(); 附近加上：
-
 
 getUseMonaco()
 
 const {proxy} = getCurrentInstance();
-const router = useRouter();
 
 // ===== 欢迎页状态 =====
 const showWelcome = ref(true);
@@ -1909,10 +1905,7 @@ function clearAccountState() {
   accountGeneration++;
   clearChat();
   ElMessageBox.close();
-
-  // 关键改动：退出时不要显示欢迎页，保持空白交由路由处理
-  showWelcome.value = false;
-
+  showWelcome.value = true;
   startingChat.value = false;
   checkingRagflowChat.value = false;
   ragflowReady.value = false;
@@ -1962,23 +1955,9 @@ function clearAccountState() {
   proxy.$modal.closeLoading();
 }
 
-watch(() => [account.id, account.token], ([newId, newToken], [oldId, oldToken]) => {
-  // 如果当前没有 token（无论是因为退出登录，还是过期）
-  if (!newToken) {
-    // 1. 清空所有状态，同时会将 showWelcome 设为 false，不显示欢迎页
-    clearAccountState();
-
-    // 2. 强制跳转到登录页
-    router.push('/login').catch(() => {});
-    return;
-  }
-
-  // 登录 / 切换账号
+watch(() => [account.id, account.token], () => {
   clearAccountState();
   if (account.id && account.token) {
-    // 只有有 token 才显示欢迎页
-    showWelcome.value = true;
-
     getModels();
     getSessions();
     loadUserConfig();
@@ -1986,14 +1965,6 @@ watch(() => [account.id, account.token], ([newId, newToken], [oldId, oldToken]) 
   }
 }, {flush: 'sync'});
 onMounted(() => {
-  // 如果初始化时就没有 token，直接拦截
-  if (!account.token) {
-    router.push('/login').catch(() => {});
-    return;
-  }
-
-  // 有 token 才正常加载
-  showWelcome.value = true;
   getModels();
   getSessions();
   loadUserConfig();
