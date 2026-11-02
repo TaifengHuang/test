@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('afterprint', afterPrint)
 })
 import { defineComponent, h, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { ElButton, ElTag } from 'element-plus'
+import { ElButton, ElMessage, ElTag } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { MarkdownRender } from 'markstream-vue'
 import 'markstream-vue/index.css'
