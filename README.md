@@ -35,14 +35,7 @@
             </template>
             <template v-else-if="workflow.resultStatus !== 'PASS'">
               <span>不通过，</span>
-              <el-link
-                type="warning"
-                :underline="false"
-                class="review-jump-link"
-                @click.stop="scrollToClaims(workflow.workflowRunId)"
-              >
-                需人工复核
-              </el-link>
+              <span>需人工复核</span>
             </template>
             <template v-else>
               {{ alertTitle(workflow) }}
@@ -62,6 +55,13 @@
                   <li v-for="(parts, itemIndex) in block.items" :key="itemIndex">
                     <template v-for="(part, partIndex) in parts" :key="partIndex">
                       <strong v-if="part.bold" :class="toneClass(part)">{{ part.text }}</strong>
+                      <el-link
+                        v-else-if="isSubTaskReviewPart(part, group.heading)"
+                        type="warning"
+                        :underline="false"
+                        class="review-jump-link"
+                        @click.stop="scrollToSubTaskClaim(workflow, group.heading)"
+                      >需人工复核</el-link>
                       <span v-else-if="part.tone || part.highlight" :class="toneClass(part)">{{ part.text }}</span>
                       <template v-else>{{ part.text }}</template>
                     </template>
@@ -71,6 +71,13 @@
                   <template v-for="(part, partIndex) in block.parts" :key="partIndex">
                     <br v-if="part.break" />
                     <strong v-if="part.bold" :class="toneClass(part)">{{ part.text }}</strong>
+                    <el-link
+                      v-else-if="isSubTaskReviewPart(part, group.heading)"
+                      type="warning"
+                      :underline="false"
+                      class="review-jump-link"
+                      @click.stop="scrollToSubTaskClaim(workflow, group.heading)"
+                    >需人工复核</el-link>
                     <span v-else-if="part.tone || part.highlight" :class="toneClass(part)">{{ part.text }}</span>
                     <template v-else>{{ part.text }}</template>
                   </template>
@@ -171,14 +178,19 @@
       <section
         :id="`claims-section-${workflow.workflowRunId}`"
         class="processing-block claims-section"
-        :class="{ 'is-claims-highlighted': highlightedClaimsRunId === workflow.workflowRunId }"
       >
         <div class="section-title" style="margin-top: 50px">事实主张</div>
         <p v-if="evidenceColorLegend(workflow.workflowCode)" class="evidence-legend">
           {{ evidenceColorLegend(workflow.workflowCode) }}
         </p>
         <el-empty v-if="!visibleClaims(workflow).length" description="Workflow 未产出 Claim" :image-size="56" />
-        <article v-for="claim in visibleClaims(workflow)" :key="claim.claimId" class="claim-card">
+        <article
+          v-for="claim in visibleClaims(workflow)"
+          :id="claimCardDomId(workflow.workflowRunId, claim.claimId)"
+          :key="claim.claimId"
+          class="claim-card"
+          :class="{ 'is-claim-highlighted': highlightedClaimKey === claimHighlightKey(workflow, claim) }"
+        >
           <div class="claim-header">
             <div><strong>{{ claim.statement }}</strong><code>{{ claim.claimId }}</code></div>
             <el-tag :type="claim.evidenceSufficient ? 'success' : 'warning'">
@@ -316,7 +328,7 @@ import {
   performanceEvidenceMatch,
   sealSignatureState
 } from './artifacts.js'
-import { analysisView, evidenceCardState, evidenceColorLegend, visibleClaims } from './analysis.js'
+import { analysisView, evidenceCardState, evidenceColorLegend, splitSubTaskHeading, visibleClaims } from './analysis.js'
 
 const ProcessingMask = defineComponent({
   name: 'ProcessingMask',
@@ -422,8 +434,8 @@ const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const workflows = ref([])
-const highlightedClaimsRunId = ref('')
-let claimsHighlightTimer = null
+const highlightedClaimKey = ref('')
+let claimHighlightTimer = null
 const expandedToolSummaries = reactive(new Set())
 function toggleToolSummary(workflowRunId) {
   if (expandedToolSummaries.has(workflowRunId)) expandedToolSummaries.delete(workflowRunId)
@@ -492,27 +504,79 @@ function analysisState(workflow) {
 }
 function goBack() { router.replace({ path: '/bid/index', query: { jobId: jobId.value } }) }
 
-/**
- * 定位到当前 Workflow 自己的事实主张区域。
- * 使用 workflowRunId 作为 DOM 锚点，避免任务 A 的入口误定位到任务 B/C。
- */
-function scrollToClaims(workflowRunId) {
-  if (!workflowRunId) return
+// Claim 卡片 DOM ID 与高亮键均包含 workflowRunId，避免不同 Workflow 的 Claim ID 重复时串位。
+function claimCardDomId(workflowRunId, claimId) {
+  return `claim-card-${encodeURIComponent(String(workflowRunId || ''))}-${encodeURIComponent(String(claimId || ''))}`
+}
 
-  const target = document.getElementById(`claims-section-${workflowRunId}`)
-  if (!target) return
+function claimHighlightKey(workflow, claim) {
+  return `${workflow?.workflowRunId || ''}::${claim?.claimId || ''}`
+}
 
-  highlightedClaimsRunId.value = workflowRunId
-  target.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  })
+function normalizeMatchText(value) {
+  return String(value || '').toLowerCase().replace(/[\\s\\p{P}\\p{S}【】（）()：:、，。；;_-]+/gu, '')
+}
 
-  if (claimsHighlightTimer) clearTimeout(claimsHighlightTimer)
-  claimsHighlightTimer = setTimeout(() => {
-    highlightedClaimsRunId.value = ''
-    claimsHighlightTimer = null
-  }, 1800)
+function findClaimForSubTask(workflow, heading) {
+  const subTask = splitSubTaskHeading(String(heading || ''))
+  if (!subTask?.name) return null
+
+  const taskName = normalizeMatchText(subTask.name)
+  const taskNumber = String(subTask.number || '')
+  const claims = visibleClaims(workflow)
+  const scored = claims.map(claim => {
+    const searchable = [
+      claim?.claimId,
+      claim?.statement,
+      claim?.subTaskName,
+      claim?.subTaskNumber,
+      claim?.meta?.subTaskName,
+      claim?.meta?.subTaskNumber
+    ].map(value => String(value ?? '')).join(' ')
+    const normalized = normalizeMatchText(searchable)
+    const nameMatched = Boolean(taskName && normalized.includes(taskName))
+    const numberMatched = Boolean(taskNumber && new RegExp(`(?:子任务|task)?0?${taskNumber}(?!\\d)`, 'i').test(searchable))
+    return { claim, score: (nameMatched ? 2 : 0) + (numberMatched ? 1 : 0), nameMatched, numberMatched }
+  }).filter(item => item.score > 0)
+
+  // 名称优先；只有名称未命中时，才允许唯一编号命中，避免跳到相似子任务。
+  const nameMatches = scored.filter(item => item.nameMatched)
+  if (nameMatches.length === 1) return nameMatches[0].claim
+  if (nameMatches.length > 1) {
+    const exact = nameMatches.filter(item => normalizeMatchText(item.claim?.statement) === taskName)
+    if (exact.length === 1) return exact[0].claim
+    return null
+  }
+  const numberMatches = scored.filter(item => item.numberMatched)
+  return numberMatches.length === 1 ? numberMatches[0].claim : null
+}
+
+function isSubTaskReviewPart(part, heading) {
+  return String(part?.text || '').trim() === '需人工复核'
+    && Boolean(splitSubTaskHeading(String(heading || ''))?.name)
+}
+
+function scrollToSubTaskClaim(workflow, heading) {
+  const claim = findClaimForSubTask(workflow, heading)
+  if (!claim) {
+    ElMessage.warning('未能根据子任务编号和名称匹配到对应的 Claim')
+    return
+  }
+
+  const target = document.getElementById(claimCardDomId(workflow.workflowRunId, claim.claimId))
+  if (!target) {
+    ElMessage.warning('已匹配到 Claim，但页面中未找到对应证据卡片')
+    return
+  }
+
+  highlightedClaimKey.value = claimHighlightKey(workflow, claim)
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+  if (claimHighlightTimer) clearTimeout(claimHighlightTimer)
+  claimHighlightTimer = setTimeout(() => {
+    highlightedClaimKey.value = ''
+    claimHighlightTimer = null
+  }, 2200)
 }
 
 function openToolCall(workflow, call) {
@@ -612,9 +676,9 @@ onBeforeUnmount(() => {
   disposed = true
   window.removeEventListener('focus', refreshOnFocus)
   clearTimeout(pollTimer)
-  if (claimsHighlightTimer) {
-    clearTimeout(claimsHighlightTimer)
-    claimsHighlightTimer = null
+  if (claimHighlightTimer) {
+    clearTimeout(claimHighlightTimer)
+    claimHighlightTimer = null
   }
   clearPreview()
 })
@@ -631,13 +695,14 @@ onBeforeUnmount(() => {
 .workflow-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .processing-block { position: relative; min-height: 72px; }
 .processing-block + .processing-block { margin-top: 14px; }
-.claims-section {
-  scroll-margin-top: 24px;
-  border-radius: 8px;
-  transition: background-color .25s ease, box-shadow .25s ease;
+.claims-section { scroll-margin-top: 24px; }
+.claim-card {
+  scroll-margin-top: 90px;
+  transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
-.claims-section.is-claims-highlighted {
-  background-color: var(--el-color-warning-light-9, #fdf6ec);
+.claim-card.is-claim-highlighted {
+  border-color: var(--el-color-warning, #e6a23c);
+  background: var(--el-color-warning-light-9, #fdf6ec);
   box-shadow: 0 0 0 3px var(--el-color-warning-light-5, #f3d19e);
 }
 .review-jump-link {
@@ -652,7 +717,7 @@ onBeforeUnmount(() => {
   border-radius: 3px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .claims-section { transition: none; }
+  .claim-card { transition: none; }
 }
 .processing-mask {
   position: absolute;
@@ -991,7 +1056,7 @@ export function splitLabelParts(line) {
   return parts
 }
 
-const WARNING_WORDS = ['审查不通过，需人工复核', '需人工复核', '需复核', '审查不通过', '审核不通过', '检测不通过', '校验不通过']
+const WARNING_WORDS = ['需人工复核', '需复核', '审查不通过', '审核不通过', '检测不通过', '校验不通过']
 const SUCCESS_WORDS = ['均通过', '审查通过', '审核通过', '检测通过', '校验通过']
 const TONE_WORDS = new Set([...WARNING_WORDS, ...SUCCESS_WORDS])
 const TONE_PATTERN = new RegExp(`(${[...TONE_WORDS].join('|')})`, 'g')
