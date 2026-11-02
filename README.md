@@ -514,7 +514,7 @@ function claimHighlightKey(workflow, claim) {
 }
 
 function normalizeMatchText(value) {
-  return String(value || '').toLowerCase().replace(/[\\s\\p{P}\\p{S}【】（）()：:、，。；;_-]+/gu, '')
+  return String(value || '').toLowerCase().replace(/[\s\p{P}\p{S}【】（）()：:、，。；;_-]+/gu, '')
 }
 
 function findClaimForSubTask(workflow, heading) {
