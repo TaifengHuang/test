@@ -9,7 +9,7 @@
     </div>
 
     <!-- 会话界面 -->
-    <el-container v-else style="height: 100%">
+    <el-container v-else class="chat-layout">
       <!-- 侧边栏：会话历史 -->
       <el-aside v-show="!sidebarCollapsed && !activeSourceMessage" width="340px" class="session-sidebar">
         <!-- 侧边栏顶部操作区 -->
@@ -590,7 +590,7 @@ import {Picture, DocumentCopy, Delete} from "@element-plus/icons-vue";
 import {v4 as uuidv4} from "uuid";
 import {useResizeObserver} from "@vueuse/core";
 import {getUseMonaco} from 'markstream-vue'
-import {h} from 'vue';
+import {h, nextTick, onActivated} from 'vue';
 
 getUseMonaco()
 
@@ -2028,6 +2028,50 @@ function scrollToBottom() {
   }
 }
 
+/**
+ * 页面首次挂载或从 KeepAlive 缓存中重新激活时，恢复聊天区域布局。
+ * 不清空消息、不重新请求会话，也不终止正在进行的流式请求。
+ */
+let layoutRestoreGeneration = 0;
+
+async function restoreChatLayout() {
+  const generation = ++layoutRestoreGeneration;
+
+  await nextTick();
+
+  await new Promise(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+
+  if (generation !== layoutRestoreGeneration) return;
+
+  const history = chatHistoryRef.value;
+  const content = chatContentRef.value;
+
+  if (!history || !content) return;
+
+  // 触发浏览器重新计算 Flex 子项尺寸
+  void history.offsetHeight;
+  void content.offsetHeight;
+
+  await new Promise(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+
+  if (generation !== layoutRestoreGeneration) return;
+
+  // 仅在用户原本处于自动跟随状态时滚动到底部
+  if (isAutoScroll.value) {
+    history.scrollTop = history.scrollHeight;
+    scrollToBottom();
+  }
+}
+
+// KeepAlive 页面重新进入时执行；普通路由首次挂载仍由 onMounted 处理
+onActivated(() => {
+  restoreChatLayout();
+});
+
 function handleMainAction() {
   // 只有真正存在流式请求控制器时才显示/执行“停止生成”；
   // loading 也用于会话详情加载，不能仅凭 loading 判断生成状态。
@@ -2184,10 +2228,30 @@ onMounted(() => {
 }
 
 .chat-container {
+  /* 以应用内容区为基准，避免路由切换后视口高度重新计算造成底部输入区偏移 */
   height: calc(100vh - 84px);
+  height: calc(100dvh - 84px);
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
   padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
   background-color: var(--el-bg-color-page);
   overflow: hidden;
+
+  > .chat-layout {
+    flex: 1 1 0;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
 }
 
 /* ===== 侧边栏美化 ===== */
@@ -2418,12 +2482,17 @@ onMounted(() => {
 
 .chat-main {
   padding: 0;
+  flex: 1 1 0;
+  width: 0;
   height: 100%;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background-color: var(--el-bg-color-page);
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 
   .chat-header {
     height: 60px;
@@ -2462,9 +2531,15 @@ onMounted(() => {
   }
 
   .chat-history {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    overflow-x: hidden;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 20px;
+    box-sizing: border-box;
 
     .chat-content {
       min-height: 100%;
@@ -2734,12 +2809,21 @@ onMounted(() => {
 
   /* 输入区域外观 */
   .chat-input-area {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    z-index: 2;
     background-color: var(--el-bg-color-page);
     padding: 10px 20px 20px;
+    box-sizing: border-box;
 
     .input-wrapper {
-      max-width: 900px;
+      width: 100%;
+      max-width: 1350px;
+      min-width: 0;
       margin: 0 auto;
+      box-sizing: border-box;
       border: 1px solid var(--el-border-color);
       border-radius: 16px;
       padding: 12px 16px;
